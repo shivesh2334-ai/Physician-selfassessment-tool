@@ -187,6 +187,33 @@ QUESTIONS = {
             "options": ["Never", "Rarely", "Sometimes", "Often", "Always"],
             "weight": 1.1
         }
+    ],
+    "Treatment Explanation (Will the Medicine Make My Life Better?)": [
+        {
+            "question": "How often do you explain the purpose and expected benefits of prescribed medications?",
+            "options": ["Never", "Rarely", "Sometimes", "Often", "Always"],
+            "weight": 1.3
+        },
+        {
+            "question": "How frequently do you discuss potential side effects and what to do if they occur?",
+            "options": ["Never", "Rarely", "Sometimes", "Often", "Always"],
+            "weight": 1.2
+        },
+        {
+            "question": "Do you check patients' understanding of the treatment plan and their ability to follow it?",
+            "options": ["Never", "Rarely", "Sometimes", "Often", "Always"],
+            "weight": 1.1
+        },
+        {
+            "question": "How often do you involve patients in shared decision-making about their treatment?",
+            "options": ["Never", "Rarely", "Sometimes", "Often", "Always"],
+            "weight": 1.2
+        },
+        {
+            "question": "How well do you address patients' concerns about cost, convenience, or regimen complexity?",
+            "options": ["Not at all", "Poorly", "Adequately", "Well", "Excellently"],
+            "weight": 1.1
+        }
     ]
 }
 
@@ -333,6 +360,18 @@ def get_recommendations(category_scores, overall_score):
                             "Regularly audit your own clinical decisions for consistency across patient groups"
                         ]
                     })
+                elif "Treatment Explanation" in category:
+                    recommendations.append({
+                        "category": category,
+                        "score": score,
+                        "actions": [
+                            "Use the 'teach-back' method to ensure patient understanding",
+                            "Create standardized handouts explaining common medications and their purposes",
+                            "Always discuss both benefits AND risks of any treatment",
+                            "Ask patients: 'What questions do you have about this treatment?' instead of 'Do you have any questions?'",
+                            "Develop a system for addressing cost concerns and providing affordable alternatives"
+                        ]
+                    })
         
         return recommendations
         
@@ -351,7 +390,8 @@ def create_score_chart(category_scores):
             "Personal\nConnect",
             "Trust of\nTrade",
             "Social\nTrust",
-            "Treating\nStyle"
+            "Treating\nStyle",
+            "Treatment\nExplanation"
         ]
         
         fig = go.Figure()
@@ -360,7 +400,7 @@ def create_score_chart(category_scores):
         fig.add_trace(go.Bar(
             x=short_categories,
             y=scores,
-            marker_color=['#3498db', '#2ecc71', '#e74c3c', '#f39c12'],
+            marker_color=['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6'],
             text=[f'{score:.2f}' for score in scores],
             textposition='outside',
             hovertext=[f'{cat}: {score:.2f}/5.0' for cat, score in zip(categories, scores)],
@@ -395,7 +435,8 @@ def create_score_chart(category_scores):
 def create_radar_chart(category_scores):
     """Create radar chart visualization."""
     try:
-        categories = ["Personal\nConnect", "Trust of\nTrade", "Social\nTrust", "Treating\nStyle"]
+        categories = ["Personal\nConnect", "Trust of\nTrade", "Social\nTrust", 
+                     "Treating\nStyle", "Treatment\nExplanation"]
         scores = list(category_scores.values())
         
         fig = go.Figure()
@@ -411,7 +452,7 @@ def create_radar_chart(category_scores):
         
         # Add target score reference
         fig.add_trace(go.Scatterpolar(
-            r=[4, 4, 4, 4, 4],
+            r=[4, 4, 4, 4, 4, 4],
             theta=categories + [categories[0]],
             fill='toself',
             name='Target Score',
@@ -567,7 +608,7 @@ def main():
             st.info("""
             Based on **"5 Questions Patients Have but Never Ask"** (JAMA Neurology, 2018).
             
-            This assessment helps physicians evaluate patient-centered care across four critical dimensions of trust and connection.
+            This assessment helps physicians evaluate patient-centered care across **five critical dimensions** of trust and connection.
             
             **Scoring:** Each question is scored 0-4, converted to a 0-5 scale with weighted importance.
             """)
@@ -600,6 +641,8 @@ def main():
             4. **Review your personalized results** and action plan
             
             *Scale: 0 (Lowest/Never) to 4 (Highest/Always)*
+            
+            **Now includes the 5th critical dimension: Treatment Explanation**
             """)
             
             # Initialize session state
@@ -615,6 +658,16 @@ def main():
                     
                     for category, questions in QUESTIONS.items():
                         st.markdown(f'<div class="category-header">{category}</div>', unsafe_allow_html=True)
+                        
+                        # Add explanation for Treatment Explanation category
+                        if "Treatment Explanation" in category:
+                            st.markdown("""
+                            <div style="background-color: #f0f8ff; padding: 1rem; border-radius: 5px; margin-bottom: 1rem; border-left: 4px solid #9b59b6;">
+                                <strong>About this category:</strong> Patients often don't ask "Will this medicine make my life better?" 
+                                but they need to understand the purpose, benefits, and risks of treatments. This category assesses 
+                                how well you communicate treatment rationale and involve patients in decision-making.
+                            </div>
+                            """, unsafe_allow_html=True)
                         
                         category_responses = []
                         for i, q in enumerate(questions):
@@ -678,6 +731,9 @@ def main():
                         <p style="font-size: 1.2rem; margin-top: 1rem;">
                             <strong>Assessment Date:</strong> {datetime.now().strftime('%B %d, %Y')}
                         </p>
+                        <p style="font-size: 1rem; color: #666;">
+                            Based on 5 dimensions of patient-centered care
+                        </p>
                     </div>
                     """, unsafe_allow_html=True)
                 
@@ -702,8 +758,8 @@ def main():
                 # Category breakdown
                 st.markdown("### 📋 Category Breakdown")
                 
-                cols = st.columns(4)
-                colors = ['#3498db', '#2ecc71', '#e74c3c', '#f39c12']
+                cols = st.columns(5)  # Changed to 5 columns for 5 categories
+                colors = ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6']
                 
                 for i, (category, score) in enumerate(category_scores.items()):
                     with cols[i]:
